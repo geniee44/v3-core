@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity =0.7.6;
 
+// Q. compiler 버전이 다른 파일을 상속받아도 문제가 없는지
 import './interfaces/IUniswapV3Factory.sol';
 
 import './UniswapV3PoolDeployer.sol';
@@ -23,6 +24,7 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
         owner = msg.sender;
         emit OwnerChanged(address(0), msg.sender);
 
+        // Q. emit하는 이유?
         feeAmountTickSpacing[500] = 10;
         emit FeeAmountEnabled(500, 10);
         feeAmountTickSpacing[3000] = 60;
@@ -31,6 +33,7 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
         emit FeeAmountEnabled(10000, 200);
     }
 
+    // 두 개의 token과 fee를 위한 pool을 생성
     /// @inheritdoc IUniswapV3Factory
     function createPool(
         address tokenA,
@@ -50,6 +53,8 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
         emit PoolCreated(token0, token1, fee, tickSpacing, pool);
     }
 
+    // owner 정보 업데이트
+    // _owner는 factory의 새로운 owner
     /// @inheritdoc IUniswapV3Factory
     function setOwner(address _owner) external override {
         require(msg.sender == owner);
@@ -57,6 +62,8 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
         owner = _owner;
     }
 
+    // fee는 활성화할 수수료 금액
+    // tickSpacing은 tick 사이의 간격, 모든 pool에 적용된다
     /// @inheritdoc IUniswapV3Factory
     function enableFeeAmount(uint24 fee, int24 tickSpacing) public override {
         require(msg.sender == owner);
@@ -64,6 +71,7 @@ contract UniswapV3Factory is IUniswapV3Factory, UniswapV3PoolDeployer, NoDelegat
         // tick spacing is capped at 16384 to prevent the situation where tickSpacing is so large that
         // TickBitmap#nextInitializedTickWithinOneWord overflows int24 container from a valid tick
         // 16384 ticks represents a >5x price change with ticks of 1 bips
+        // Q. tickSpacing이 0보다 커야 하면 그냥 uint로 하는거랑 뭐가 다른지
         require(tickSpacing > 0 && tickSpacing < 16384);
         require(feeAmountTickSpacing[fee] == 0);
 
